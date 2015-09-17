@@ -1,0 +1,28 @@
+{
+  "name": "php-kit/power-primitives",
+  "license": "MIT",
+  "description": "PHP's arrays and strings as chainable, composable, object-oriented constructs",
+  "keywords": [
+    "helpers",
+    "utility"
+  ],
+  "homepage": "https://github.com/php-kit/power-primitives",
+  "authors": [
+    {
+      "name": "Impactwave",
+      "email": "impactwave@impactwave.com",
+      "homepage": "http://impactwave.com"
+    },
+    {
+      "name": "Cláudio Silva",
+      "email": "claudio.silva@impactwave.com"
+    }
+  ],
+  "autoload": {
+    "files": [
+      "src/globals.php",
+      "src/PowerArray.php",
+      "src/PowerString.php"
+    ]
+  }
+}
