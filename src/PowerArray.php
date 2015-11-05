@@ -507,9 +507,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    */
   function merge ($v)
   {
-    if (is_array ($v)) array_concat ($this->A, $v);
+    if (is_array ($v)) array_mergeInto ($this->A, $v);
     else if ($v instanceof static)
-      array_concat ($this->A, $v->A);
+      array_mergeInto ($this->A, $v->A);
     else throw new InvalidArgumentException;
   }
 
