@@ -39,7 +39,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    */
   static function of (array $src = [])
   {
-    $x = new static;
+    $x    = new static;
     $x->A = $src;
     return $x;
   }
@@ -424,6 +424,17 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   }
 
   /**
+   * Join array elements with a string.
+   *
+   * @param string $glue
+   * @return string
+   */
+  function join ($glue = '')
+  {
+    return implode ($glue, $this->A);
+  }
+
+  /**
    * Merges records from two arrays using the specified primary key field.
    * When keys collide, the corresponding values are assumed to be arrays and they are merged.
    *
@@ -432,7 +443,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return $this Self, for chaining.
    */
-  function join ($array, $field)
+  function joinRecords ($array, $field)
   {
     // NOT IMPLEMENTED!!! DUMMY CODE!
     $this->A = array_join ($this->A, $array instanceof self ? $array->A : $array, $field);
