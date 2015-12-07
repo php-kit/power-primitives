@@ -649,6 +649,18 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   }
 
   /**
+   * Sorts the array.
+   *
+   * @param int $flags [optional] See {@see sort()}
+   * @return $this Self, for chaining.
+   */
+  function sort ($flags = null)
+  {
+    sort ($this->A, $flags);
+    return $this;
+  }
+
+  /**
    * Remove a portion of the array and replace it with something else.
    * @param int        $offset      If offset is positive then the start of removed portion is at that offset from the
    *                                beginning of the input array. If offset is negative then it starts that far from
