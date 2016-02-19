@@ -6,6 +6,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * The array representation of this instance.
    *
    * Treat this as read-only - **do not modify** it directly!
+   *
    * @var string
    */
   public $A;
@@ -21,6 +22,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Typecasts the given array variable to a `PowerArray` that wraps that array.
    *
    * <p>**Warning:** the variable passed as argument will be converted to an instance of `PowerArray`.
+   *
    * @param array $src A variable of type array.
    * @return static The same value of `$src` after the typecast.
    */
@@ -34,6 +36,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Creates an instance of `PowerArray` that handles a copy (on write) of the given array.
+   *
    * @param array $src
    * @return static
    */
@@ -49,6 +52,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * <p>**Warning:** this method returns **always** the same instance. This is meant to be a wrapper for applying
    * extension methods to an existing array variable. You should **not** store the instance anywhere, as it will lead
    * to unexpected problems. If  you need to do that, use {@see PowerArray::of} instead.
+   *
    * @param array $src
    * @return static
    */
@@ -145,7 +149,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return array_binarySearch ($this->A, $what, $probe, $comparator);
   }
 
-  public function count ()
+  function count ()
   {
     return count ($this->A);
   }
@@ -268,7 +272,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
-  public function getIterator ()
+  function getIterator ()
   {
     return $this->A;
   }
@@ -358,6 +362,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *   ],
    * ]
    * ```
+   *
    * @param string ...$args The field names.
    * @return $this Self, for chaining.
    */
@@ -395,6 +400,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Gets the key of the first element of the array that matches a given value.
+   *
    * @param mixed $value  The value to search for.
    * @param bool  $strict Determines if strict comparison (===) should be used during the search.
    *
@@ -452,6 +458,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Gets all the keys of the array.
+   *
    * @return $this Self, for chaining.
    */
   function keys ()
@@ -462,6 +469,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Gets all the keys of the array that match a given value.
+   *
    * @param mixed      $value  Only keys containing these values are returned.
    * @param bool|false $strict Determines if strict comparison (===) should be used during the search.
    * @return $this
@@ -514,6 +522,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Merges another array or instance of this class with this one.
+   *
    * @param array|PowerArray $v
    */
   function merge ($v)
@@ -538,22 +547,22 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return missing ($this->A, $key);
   }
 
-  public function offsetExists ($offset)
+  function offsetExists ($offset)
   {
     return isset ($this->A[$offset]);
   }
 
-  public function offsetGet ($offset)
+  function offsetGet ($offset)
   {
     return isset ($this->A[$offset]) ? $this->A[$offset] : null;
   }
 
-  public function offsetSet ($offset, $value)
+  function offsetSet ($offset, $value)
   {
     $this->A[$offset] = $value;
   }
 
-  public function offsetUnset ($offset)
+  function offsetUnset ($offset)
   {
     unset ($this->A[$offset]);
   }
@@ -583,6 +592,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Returns the input array stripped of empty elements (those that are either `null` or empty strings).
+   *
    * @return $this Self, for chaining.
    */
   function prune ()
@@ -593,6 +603,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Iteratively reduce the array to a single value using a callback function.
+   *
    * @param callable $fn      The callback function.
    * @param mixed    $initial If the optional initial is available, it will be used at the beginning of the process, or
    *                          as a final result in case the array is empty.
@@ -616,12 +627,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
-  public function serialize ()
+  function serialize ()
   {
     return serialize ($this->A);
   }
 
-  public function unserialize ($serialized)
+  function unserialize ($serialized)
   {
     $this->A = unserialize ($serialized);
   }
@@ -633,6 +644,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Extract a slice of the array.
+   *
    * @param int  $start        If offset is non-negative, the sequence will start at that offset in the array. If
    *                           offset is negative, the sequence will start that far from the end of the array.
    * @param int  $len          If length is given and is positive, then the sequence will have that many elements
@@ -641,11 +653,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                           everything from offset up until the end of the array.
    * @param bool $preserveKeys Note that `slice()` will reorder and reset the array indices by default. You can
    *                           change this behaviour by setting `$preserveKeys` to true.
-   * @return array
+   * @return $this Self, for chaining.
    */
   function slice ($start, $len, $preserveKeys = false)
   {
-    return array_slice ($this->A, $start, $len, $preserveKeys);
+    $this->A = array_slice ($this->A, $start, $len, $preserveKeys);
+    return $this;
   }
 
   /**
@@ -662,6 +675,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Remove a portion of the array and replace it with something else.
+   *
    * @param int        $offset      If offset is positive then the start of removed portion is at that offset from the
    *                                beginning of the input array. If offset is negative then it starts that far from
    *                                the end of the input array.
