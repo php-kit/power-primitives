@@ -218,7 +218,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   }
 
   /**
-   * Estracts from an array all elements where the specified field matches the given value.
+   * Extracts from an array all elements where the specified field matches the given value.
    * Supports arrays of objects or arrays of arrays.
    *
    * @param string $fld
@@ -233,9 +233,14 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
+  /**
+   * Returns the first element of the array. The array is not modified.
+   *
+   * @return mixed|null null if the array is empty.
+   */
   function first ()
   {
-    return $this->A[0];
+    return $this->A ? $this->A[0] : null;
   }
 
   /**
@@ -480,9 +485,14 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
+  /**
+   * Returns the last element of the array. The array is not modified.
+   *
+   * @return mixed|null null if the array is empty.
+   */
   function last ()
   {
-    return array_slice ($this->A, -1);
+    return $this->A ? array_slice ($this->A, -1)[0] : null;
   }
 
   /**
