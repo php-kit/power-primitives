@@ -6,6 +6,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * The string representation of this instance.
    *
    * Treat this as read-only - **do not modify** it directly!
+   *
    * @var string
    */
   public $S = '';
@@ -22,6 +23,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * Typecasts the given string variable to a `PowerString` that wraps that string.
    *
    * <p>**Warning:** the variable passed as argument will be converted to an instance of `PowerString`.
+   *
    * @param string $src A variable of type `string`.
    * @return static The same value of `$src` after the typecast.
    */
@@ -40,12 +42,15 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
 
   /**
    * Creates an instance of `PowerString` that handles a copy of the given string.
+   *
    * @param string $src
    * @return static
    */
   static function of ($src = '')
   {
-    return new static ($src);
+    $x = new static ($src);
+    $x->S = $src;
+    return $x;
   }
 
   /**
@@ -53,6 +58,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * <p>**Warning:** this method returns **always** the same instance. This is meant to be a wrapper for applying
    * extension methods to an existing string variable. You should **not** store the instance anywhere, as it will lead
    * to unexpected problems. If  you need to do that, use {@see `PowerString`::of} instead.
+   *
    * @param string $src
    * @return static
    */
@@ -64,6 +70,13 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return $x;
   }
 
+  /**
+   * Sets the `u` unicode flag on a regular expression and, if the `a` pseudo-flag is present, it removes it and returns
+   * `true` to signal a global search (find all).
+   *
+   * @param string $pattern
+   * @return bool true if the `a` flag was specified.
+   */
   private static function toUnicodeRegex (& $pattern)
   {
     $d = $pattern[0];
@@ -106,6 +119,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    *   echo count ($s);
    * ```
    * Outputs `4`.
+   *
    * @return int
    */
   function count ()
@@ -143,6 +157,12 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return mb_strlen ($this->S);
   }
 
+  /**
+   * @param string $pattern
+   * @param int    $flags
+   * @param int    $ofs
+   * @return array|bool An array with the matches.
+   */
   function match ($pattern, $flags = 0, $ofs = 0)
   {
     $isGlobal = self::toUnicodeRegex ($pattern);
@@ -192,6 +212,12 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return $this;
   }
 
+  /**
+   * Searches for a pattern on a string and returns the index of the matched substring.
+   *
+   * @param string $pattern A regular expression pattern.
+   * @return int The index of the matched substring.
+   */
   function search ($pattern)
   {
     self::toUnicodeRegex ($pattern);
@@ -206,12 +232,32 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return $this;
   }
 
-  function split ($pattern, $limit)
+  /**
+   * @param string $substr The substring to match and split on.
+   * @param int    $limit  [optional]
+   * @return PowerArray
+   */
+  function split ($substr, $limit = null)
   {
-    self::toUnicodeRegex ($pattern);
-    return preg_split ($pattern, $this->S, $limit);
+    return PowerArray::of (explode ($substr, $this->S, $limit));
   }
 
+  /**
+   * @param string $pattern A regular expression pattern.
+   * @param int    $limit   [optional]
+   * @return PowerArray
+   */
+  function splitByPattern ($pattern, $limit = -1)
+  {
+    self::toUnicodeRegex ($pattern);
+    return PowerArray::of (preg_split ($pattern, $this->S, $limit));
+  }
+
+  /**
+   * @param string $search
+   * @param int    $pos [optional]
+   * @return bool
+   */
   function startsWith ($search, $pos = 0)
   {
     return mb_substr ($this->S, $pos, strlen ($search)) === $search;

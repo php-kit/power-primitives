@@ -438,11 +438,11 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Join array elements with a string.
    *
    * @param string $glue
-   * @return string
+   * @return PowerString
    */
   function join ($glue = '')
   {
-    return implode ($glue, $this->A);
+    return PowerString::of (implode ($glue, $this->A));
   }
 
   /**
