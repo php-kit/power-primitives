@@ -1,13 +1,13 @@
 <?php
 
-class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializable
+class PowerArray implements ArrayAccess, Countable, IteratorAggregate
 {
   /**
    * The array representation of this instance.
    *
    * Treat this as read-only - **do not modify** it directly!
    *
-   * @var string
+   * @var array
    */
   public $A;
 
@@ -62,6 +62,11 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     if (!isset($x)) $x = new static;
     $x->A =& $src;
     return $x;
+  }
+
+  public function __debugInfo ()
+  {
+    return $this->A;
   }
 
   /**
@@ -504,12 +509,15 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Unlike array_map, the original keys will be preserved, unless the callback defines the
    * key parameter as a reference and modifies the key.
    *
-   * @param callable $fn The callback.
+   * @param callable $fn               The callback.
+   * @param bool     $useKeys          [optional] When true, the iteration keys are passed as a second argument to the
+   *                                   callback. Set to false for compatibility with native PHP functions used as
+   *                                   callbacks, as they will complain if an extra argument is provided.
    * @return $this Self, for chaining.
    */
-  function map (callable $fn)
+  function map (callable $fn, $useKeys = true)
   {
-    $this->A = map ($this->A, $fn);
+    $this->A = map ($this->A, $fn, $useKeys);
     return $this;
   }
 
@@ -594,6 +602,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return array_pop ($this->A);
   }
 
+  /**
+   * Inserts element at the beginning of the array.
+   *
+   * @param mixed ...$args One or more elements to prepend to the array.
+   * @return $this
+   */
   function prepend ()
   {
     call_user_func_array ('array_unshift', array_merge ($this->A, func_get_args ()));
@@ -637,16 +651,11 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
-  function serialize ()
-  {
-    return serialize ($this->A);
-  }
-
-  function unserialize ($serialized)
-  {
-    $this->A = unserialize ($serialized);
-  }
-
+  /**
+   * Shifts an element off the beginning of array.
+   *
+   * @return mixed
+   */
   function shift ()
   {
     return array_shift ($this->A);
@@ -710,6 +719,30 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   }
 
   /**
+   * Discards the first item(s) of the array.
+   *
+   * @param int $count [optional] How many elements to discard.
+   * @return $this
+   */
+  function stripFirst ($count = 1)
+  {
+    $this->A = array_slice ($this->A, $count);
+    return $this;
+  }
+
+  /**
+   * Discards the last item(s) of the array.
+   *
+   * @param int $count [optional] How many elements to discard.
+   * @return $this
+   */
+  function stripLast ($count = 1)
+  {
+    $this->A = array_slice ($this->A, 0, -$count);
+    return $this;
+  }
+
+  /**
    * Converts a PHP array map to an instance of the specified class.
    *
    * @param string $className
@@ -720,4 +753,5 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   {
     return array_toClass ($this->A, $className);
   }
+
 }

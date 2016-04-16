@@ -1,5 +1,25 @@
 <?php
 
+/**
+ * An object oriented string API for PHP.
+ *
+ * <p>To retrieve a PHP native string from a PowerString instance or expression, read the `S` property.
+ * <p>Nevertheless, you can use power strings directly in many situations where a native string is expected;
+ * for example, you can pass them as arguments to native functions that expect strings, and you can use the `==`
+ * operator to compare a power string to a native string or to another power string.
+ *
+ * >##### Notes
+ *
+ * > Do not use the `===` operator to compare power strings to strings or to other power strings. Use the `==` operator
+ * > instead.
+ *
+ * ><p>Treat `S` as a read only property. Modifying it directly is discouraged.<br>
+ * > The reason it is not a method is simply to make expressions with power strings shorter and a little more readable.
+ *
+ * ><p>All methods support Unicode.
+ *
+ * ><p>A subset of the API purposefully mimics the Javascript ES6 String object.
+ */
 class PowerString implements Countable, IteratorAggregate, ArrayAccess
 {
   /**
@@ -48,7 +68,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    */
   static function of ($src = '')
   {
-    $x = new static ($src);
+    $x    = new static ($src);
     $x->S = $src;
     return $x;
   }
@@ -92,6 +112,18 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return $this->S;
   }
 
+  /**
+   * Appends the given string to the current one.
+   *
+   * @param string $str
+   * @return $this
+   */
+  function append ($str)
+  {
+    $this->S .= $str;
+    return $this;
+  }
+
   function charAt ($index)
   {
     $v = mb_substr ($this->S, $index, 1);
@@ -104,6 +136,11 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return $v === false ? 0 : mb_ord ($v);
   }
 
+  /**
+   * Concatenates the given arguments to the current string.
+   *
+   * @param string|static ...$args
+   */
   function concat ()
   {
     $this->S = $this->S . implode ('', func_get_args ());
@@ -145,6 +182,21 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
   function indexOf ($search, $from = 0)
   {
     return mb_strpos ($this->S, $search, $from);
+  }
+
+  /**
+   * Searches for a pattern on a string and returns the index of the matched substring.
+   *
+   * ><p>This is a simpler version of {@see search}.
+   *
+   * @param string $pattern A regular expression pattern.
+   * @return int The index of the matched substring.
+   */
+  function indexOfPattern ($pattern)
+  {
+    self::toUnicodeRegex ($pattern);
+    if (!preg_match ($pattern, $this->S, $m, PREG_OFFSET_CAPTURE)) return false;
+    return $m[0][1];
   }
 
   function lastIndexOf ($search, $from = 0)
@@ -197,6 +249,18 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     $this->S = mb_substr ($this->S, 0, $offset) . mb_substr ($this->S, $offset + 1);
   }
 
+  /**
+   * Prepends the given string to the current one.
+   *
+   * @param string $str
+   * @return $this
+   */
+  function prepend ($str)
+  {
+    $this->S = $str . $this->S;
+    return $this;
+  }
+
   function repeat ($count)
   {
     $this->S = str_repeat ($this->S, $count);
@@ -213,16 +277,23 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
   }
 
   /**
-   * Searches for a pattern on a string and returns the index of the matched substring.
+   * Finds the position of the first occurrence of a pattern in the current string.
    *
-   * @param string $pattern A regular expression pattern.
-   * @return int The index of the matched substring.
+   * ><p>This is an extended version of {@see indexOfPattern}.
+   *
+   * @param string $pattern A regular expression.
+   * @param int    $from    The position where the search begins, counted from the beginning of the current string.
+   * @param string $match   [optional] If a variable is specified, it will be set to the matched substring.
+   * @return int|bool false if no match was found.
    */
-  function search ($pattern)
+  function search ($pattern, $from = 0, &$match = null)
   {
     self::toUnicodeRegex ($pattern);
-    if (!preg_match ($pattern, $this->S, $m, PREG_OFFSET_CAPTURE)) return false;
-    return $m[0][1];
+    if (preg_match ($pattern, $this->S, $m, PREG_OFFSET_CAPTURE)) {
+      list ($match, $ofs) = $m[0];
+      return $ofs;
+    }
+    return false;
   }
 
   function slice ($begin, $end = null)
@@ -239,7 +310,9 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    */
   function split ($substr, $limit = null)
   {
-    return PowerArray::of (explode ($substr, $this->S, $limit));
+    return PowerArray::of (isset($limit)
+      ? explode ($substr, $this->S, $limit)
+      : explode ($substr, $this->S));
   }
 
   /**
