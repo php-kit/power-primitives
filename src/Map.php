@@ -2,38 +2,38 @@
 
 class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
 {
-  private $data = [];
+  private $_data = [];
 
   function __debugInfo ()
   {
-    return $this->data;
+    return $this->_data;
   }
 
   function __get ($key)
   {
-    return isset($this->data[$key]) ? $this->data[$key] : null;
+    return isset($this->_data[$key]) ? $this->_data[$key] : null;
   }
 
   function __set ($key, $value)
   {
     if (isset($value))
-      $this->data[$key] = $value;
-    else unset ($this->data[$key]);
+      $this->_data[$key] = $value;
+    else unset ($this->_data[$key]);
   }
 
   function __isset ($key)
   {
-    return isset($this->data[$key]);
+    return isset($this->_data[$key]);
   }
 
   function __unset ($key)
   {
-    unset ($this->data[$key]);
+    unset ($this->_data[$key]);
   }
 
   public function & asArray ()
   {
-    return $this->data;
+    return $this->_data;
   }
 
   /**
@@ -41,23 +41,23 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
    */
   function clear ()
   {
-    $this->data = [];
+    $this->_data = [];
     return $this;
   }
 
   public function count ()
   {
-    return count ($this->data);
+    return count ($this->_data);
   }
 
   public function getIterator ()
   {
-    return new \ArrayIterator($this->data);
+    return new \ArrayIterator($this->_data);
   }
 
   public function keys ()
   {
-    return array_keys ($this->data);
+    return array_keys ($this->_data);
   }
 
   /**
@@ -67,40 +67,40 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
   public function merge ($data)
   {
     if (is_array ($data))
-      $this->data = $data + $this->data;
+      $this->_data = $data + $this->_data;
     elseif ($data instanceof static)
-      $this->data = $data->data + $this->data;
+      $this->_data = $data->_data + $this->_data;
     elseif ($data instanceof \IteratorAggregate)
-      $this->data = iterator_to_array ($data->getIterator (), true) + $this->data; // optimized for speed, not memory
+      $this->_data = iterator_to_array ($data->getIterator (), true) + $this->_data; // optimized for speed, not memory
     else if (is_object ($data))
-      $this->data = get_object_vars ($data) + $this->data;
+      $this->_data = get_object_vars ($data) + $this->_data;
     else throw new \InvalidArgumentException('Unsupported type ' . gettype ($data));
     return $this;
   }
 
   public function offsetExists ($offset)
   {
-    return isset($this->data[$offset]);
+    return isset($this->_data[$offset]);
   }
 
   public function offsetGet ($offset)
   {
-    return isset($this->data[$offset]) ? $this->data[$offset] : null;
+    return isset($this->_data[$offset]) ? $this->_data[$offset] : null;
   }
 
   public function offsetSet ($offset, $value)
   {
-    $this->data[$offset] = $value;
+    $this->_data[$offset] = $value;
   }
 
   public function offsetUnset ($offset)
   {
-    unset ($this->data[$offset]);
+    unset ($this->_data[$offset]);
   }
 
   public function serialize ()
   {
-    return serialize ($this->data);
+    return serialize ($this->_data);
   }
 
   /**
@@ -110,9 +110,9 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
   public function set ($data)
   {
     if (is_array ($data))
-      $this->data = $data;
+      $this->_data = $data;
     else {
-      $this->data = [];
+      $this->_data = [];
       $this->merge ($data);
     }
     return $this;
@@ -120,7 +120,7 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
 
   public function unserialize ($serialized)
   {
-    $this->data = unserialize ($serialized);
+    $this->_data = unserialize ($serialized);
   }
 
 }

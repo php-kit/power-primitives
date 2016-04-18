@@ -12,7 +12,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   public $A;
 
   /**
-   * Creates an uninitialized instance of `PowerArray` that should not be used until the `data` property is set.
+   * Creates an uninitialized instance of `PowerArray` that should not be used until the `A` property is set.
    *
    * Use {@see PowerArray::of()} or {@see PowerArray::on()} for creating instances.
    */
@@ -35,15 +35,27 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   }
 
   /**
-   * Creates an instance of `PowerArray` that handles a copy (on write) of the given array.
+   * Creates an instance of `PowerArray` that handles a copy (on write) of the given array or iterator.
    *
-   * @param array $src
+   * @param array|Iterator|IteratorAggregate $src
    * @return static
    */
-  static function of (array $src = [])
+  static function of ($src)
   {
-    $x    = new static;
-    $x->A = $src;
+    $x = new static;
+    switch (true) {
+      case is_array ($src):
+        $x->A = $src;
+        break;
+      case $src instanceof IteratorAggregate:
+        $x->A = iterator_to_array ($src->getIterator ());
+        break;
+      case $src instanceof Iterator:
+        $x->A = iterator_to_array ($src);
+        break;
+      default:
+        throw new InvalidArgumentException;
+    }
     return $x;
   }
 
