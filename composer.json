@@ -22,7 +22,8 @@
     "files": [
       "src/globals.php",
       "src/PowerArray.php",
-      "src/PowerString.php"
+      "src/PowerString.php",
+      "src/Map.php"
     ]
   }
 }

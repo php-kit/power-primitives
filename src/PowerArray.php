@@ -1,6 +1,6 @@
 <?php
 
-class PowerArray implements ArrayAccess, Countable, IteratorAggregate
+class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializable
 {
   /**
    * The array representation of this instance.
@@ -651,6 +651,11 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate
     return $this;
   }
 
+  public function serialize ()
+  {
+    return serialize ($this->A);
+  }
+
   /**
    * Shifts an element off the beginning of array.
    *
@@ -752,6 +757,11 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate
   function toClass ($className)
   {
     return array_toClass ($this->A, $className);
+  }
+
+  public function unserialize ($serialized)
+  {
+    $this->A = unserialize ($serialized);
   }
 
 }
