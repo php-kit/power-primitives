@@ -1,5 +1,4 @@
 <?php
-namespace Selenia\ViewEngine\Lib;
 
 class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
 {
