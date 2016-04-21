@@ -1,6 +1,6 @@
 <?php
 
-class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
+class Map implements MapInterface
 {
   private $_data = [];
 
@@ -36,9 +36,6 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
     return $this->_data;
   }
 
-  /**
-   * @return $this
-   */
   function clear ()
   {
     $this->_data = [];
@@ -58,24 +55,6 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
   public function keys ()
   {
     return array_keys ($this->_data);
-  }
-
-  /**
-   * @param Map|array|\IteratorAggregate|object $data
-   * @return $this
-   */
-  public function merge ($data)
-  {
-    if (is_array ($data))
-      $this->_data = $data + $this->_data;
-    elseif ($data instanceof static)
-      $this->_data = $data->_data + $this->_data;
-    elseif ($data instanceof \IteratorAggregate)
-      $this->_data = iterator_to_array ($data->getIterator (), true) + $this->_data; // optimized for speed, not memory
-    else if (is_object ($data))
-      $this->_data = get_object_vars ($data) + $this->_data;
-    else throw new \InvalidArgumentException('Unsupported type ' . gettype ($data));
-    return $this;
   }
 
   public function offsetExists ($offset)
@@ -103,17 +82,27 @@ class Map implements \IteratorAggregate, \ArrayAccess, \Serializable, \Countable
     return serialize ($this->_data);
   }
 
-  /**
-   * @param Map|array|\IteratorAggregate|object $data
-   * @return $this
-   */
+  public function apply ($data)
+  {
+    if (is_array ($data))
+      $this->_data = $data + $this->_data;
+    elseif ($data instanceof self)
+      $this->_data = $data->_data + $this->_data;
+    elseif ($data instanceof \IteratorAggregate)
+      $this->_data = iterator_to_array ($data->getIterator (), true) + $this->_data; // optimized for speed, not memory
+    else if (is_object ($data))
+      $this->_data = get_object_vars ($data) + $this->_data;
+    else throw new \InvalidArgumentException('Unsupported type ' . gettype ($data));
+    return $this;
+  }
+
   public function set ($data)
   {
     if (is_array ($data))
       $this->_data = $data;
     else {
       $this->_data = [];
-      $this->merge ($data);
+      $this->apply ($data);
     }
     return $this;
   }
