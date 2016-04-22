@@ -47,9 +47,41 @@ class Map implements MapInterface
     return count ($this->_data);
   }
 
+  /**
+   * Gets the element associated with the given key.
+   *
+   * <p>This is an alias of the `[ ]` indexing operator.
+   *
+   * ><p>**Note:** this method provides compabibility with other interfaces, like for instance, the
+   * {@see \Interop\Container\ContainerInterface}.
+   *
+   * @param string $key
+   * @return mixed
+   */
+  public function get ($key)
+  {
+    // TODO: Implement get() method.
+  }
+
   public function getIterator ()
   {
     return new \ArrayIterator($this->_data);
+  }
+
+  /**
+   * Returns `true` if the map can return an entry for the given key, `false` otherwise.
+   *
+   * <p>This is an alias of the `isset` operator.
+   *
+   * ><p>**Note:** this method provides compatibility with some other interfaces, like for instance, the
+   * {@see \Interop\Container\ContainerInterface}.
+   *
+   * @param string $key Identifier of the entry to look for.
+   * @return boolean
+   */
+  public function has ($key)
+  {
+    // TODO: Implement has() method.
   }
 
   public function keys ()
@@ -82,28 +114,20 @@ class Map implements MapInterface
     return serialize ($this->_data);
   }
 
-  public function apply ($data)
+  public function set ($keyOrData, $value = null)
   {
-    if (is_array ($data))
-      $this->_data = $data + $this->_data;
-    elseif ($data instanceof self)
-      $this->_data = $data->_data + $this->_data;
-    elseif ($data instanceof \IteratorAggregate)
-      $this->_data = iterator_to_array ($data->getIterator (), true) + $this->_data; // optimized for speed, not memory
-    else if (is_object ($data))
-      $this->_data = get_object_vars ($data) + $this->_data;
-    else throw new \InvalidArgumentException('Unsupported type ' . gettype ($data));
-    return $this;
-  }
-
-  public function set ($data)
-  {
-    if (is_array ($data))
-      $this->_data = $data;
-    else {
-      $this->_data = [];
-      $this->apply ($data);
-    }
+    if (is_string ($keyOrData))
+      $this->$keyOrData = $value;
+    elseif (is_array ($keyOrData))
+      $this->_data = $keyOrData + $this->_data;
+    elseif ($keyOrData instanceof self)
+      $this->_data = $keyOrData->_data + $this->_data;
+    elseif ($keyOrData instanceof \IteratorAggregate)
+      // optimized for speed, not memory
+      $this->_data = iterator_to_array ($keyOrData->getIterator (), true) + $this->_data;
+    else if (is_object ($keyOrData))
+      $this->_data = get_object_vars ($keyOrData) + $this->_data;
+    else throw new \InvalidArgumentException('Unsupported type ' . gettype ($keyOrData));
     return $this;
   }
 
@@ -111,5 +135,4 @@ class Map implements MapInterface
   {
     $this->_data = unserialize ($serialized);
   }
-
 }
