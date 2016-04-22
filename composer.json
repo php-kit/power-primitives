@@ -23,6 +23,7 @@
       "src/globals.php",
       "src/PowerArray.php",
       "src/PowerString.php",
+      "src/MapInterface.php",
       "src/Map.php"
     ]
   }
