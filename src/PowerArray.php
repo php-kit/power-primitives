@@ -178,7 +178,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param array $keys The keys of the values to be extracted from each $array element.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function extract (array $keys)
   {
@@ -191,7 +191,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param array $keys A list of keys to be extracted.
    * @param mixed $def  An optional default value to be returned for non-existing keys.
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    * @see PowerArray::extract
    */
   function fields (array $keys, $def = null)
@@ -207,7 +207,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param callable $fn
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function filter (callable $fn)
   {
@@ -226,7 +226,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param mixed  $val
    * @param bool   $strict TRUE to perform strict equality testing.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function find ($fld, $val, $strict = false)
   {
@@ -242,7 +242,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param mixed  $val
    * @param bool   $strict TRUE to perform strict equality testing.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function findAll ($fld, $val, $strict = false)
   {
@@ -269,7 +269,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param int|string $key Null value is not supported.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function getColumn ($key)
   {
@@ -286,7 +286,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param array $keys A list of integer or string keys.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function getColumns (array $keys)
   {
@@ -296,7 +296,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   function getIterator ()
   {
-    return $this->A;
+    return new ArrayIterator ($this->A);
   }
 
   /**
@@ -386,7 +386,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * ```
    *
    * @param string ...$args The field names.
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function group ()
   {
@@ -399,7 +399,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param string $className
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function hidrate ($className)
   {
@@ -412,7 +412,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Array items should be arrays or objects.
    *
    * @param string $field The field name.
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function indexBy ($field)
   {
@@ -443,7 +443,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array    $cols
    * @param callable $fn
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function iterateColumns (array $cols, callable $fn)
   {
@@ -469,7 +469,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array|PowerArray $array
    * @param string           $field
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function joinRecords ($array, $field)
   {
@@ -481,7 +481,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   /**
    * Gets all the keys of the array.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function keys ()
   {
@@ -494,7 +494,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param mixed      $value  Only keys containing these values are returned.
    * @param bool|false $strict Determines if strict comparison (===) should be used during the search.
-   * @return $this
+   * @return PowerArray
    */
   function keysOf ($value, $strict = true)
   {
@@ -525,7 +525,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param bool     $useKeys          [optional] When true, the iteration keys are passed as a second argument to the
    *                                   callback. Set to false for compatibility with native PHP functions used as
    *                                   callbacks, as they will complain if an extra argument is provided.
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function map (callable $fn, $useKeys = true)
   {
@@ -542,7 +542,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array    $cols
    * @param callable $fn
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function mapColumns (array $cols, callable $fn)
   {
@@ -599,9 +599,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
   /**
    * Sorts the array by one or more field values.
-   * Ex: orderBy ($data, 'volume', SORT_DESC, 'edition', SORT_ASC);
+   * Ex: orderBy ('volume', SORT_DESC, 'edition', SORT_ASC);
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function orderBy ()
   {
@@ -618,7 +618,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Inserts element at the beginning of the array.
    *
    * @param mixed ...$args One or more elements to prepend to the array.
-   * @return $this
+   * @return PowerArray
    */
   function prepend ()
   {
@@ -629,7 +629,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   /**
    * Returns the input array stripped of empty elements (those that are either `null` or empty strings).
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function prune ()
   {
@@ -655,7 +655,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * This is useful to extract the data as a linear array with no discontinuous keys.
    *
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function reindex ()
   {
@@ -689,7 +689,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                           everything from offset up until the end of the array.
    * @param bool $preserveKeys Note that `slice()` will reorder and reset the array indices by default. You can
    *                           change this behaviour by setting `$preserveKeys` to true.
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function slice ($start, $len, $preserveKeys = false)
   {
@@ -701,7 +701,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Sorts the array.
    *
    * @param int $flags [optional] See {@see sort()}
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function sort ($flags = null)
   {
@@ -727,7 +727,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                                the offset. Note that keys in replacement array are not preserved. If replacement
    *                                is just one element it is not necessary to put array() around it, unless the
    *                                element is an array itself.
-   * @return $this Self, for chaining.
+   * @return PowerArray Self, for chaining.
    */
   function splice ($offset, $length = null, array $replacement = null)
   {
@@ -739,7 +739,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Discards the first item(s) of the array.
    *
    * @param int $count [optional] How many elements to discard.
-   * @return $this
+   * @return PowerArray
    */
   function stripFirst ($count = 1)
   {
@@ -751,7 +751,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * Discards the last item(s) of the array.
    *
    * @param int $count [optional] How many elements to discard.
-   * @return $this
+   * @return PowerArray
    */
   function stripLast ($count = 1)
   {

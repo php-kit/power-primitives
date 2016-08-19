@@ -45,7 +45,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * <p>**Warning:** the variable passed as argument will be converted to an instance of `PowerString`.
    *
    * @param string $src A variable of type `string`.
-   * @return static The same value of `$src` after the typecast.
+   * @return PowerString The same value of `$src` after the typecast.
    */
   static function cast (& $src)
   {
@@ -64,7 +64,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * Creates an instance of `PowerString` that handles a copy of the given string.
    *
    * @param string $src
-   * @return static
+   * @return PowerString
    */
   static function of ($src = '')
   {
@@ -80,7 +80,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * to unexpected problems. If  you need to do that, use {@see `PowerString`::of} instead.
    *
    * @param string $src
-   * @return static
+   * @return PowerString
    */
   static function on (& $src)
   {
