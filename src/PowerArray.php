@@ -627,13 +627,24 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   }
 
   /**
-   * Returns the input array stripped of empty elements (those that are either `null` or empty strings).
+   * Returns the input array stripped of null elements (with strict comparison).
    *
    * @return PowerArray Self, for chaining.
    */
   function prune ()
   {
     $this->A = array_prune ($this->A);
+    return $this;
+  }
+
+  /**
+   * Returns the input array stripped of empty elements (those that are either `null` or empty strings).
+   *
+   * @return PowerArray Self, for chaining.
+   */
+  function prune_empty ()
+  {
+    $this->A = array_prune_empty ($this->A);
     return $this;
   }
 
