@@ -218,20 +218,17 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
   /**
    * Searches an array for the first element where the specified field matches the given value.
    * Supports arrays of objects or arrays of arrays.
-   * Result: array(value,index) The index and value of the first matching element or
-   * array (null, false) if none found.
-   * <p>Use <code>list ($v,$i) = $array->find()</code> to immediately split the return value into separate variables.
+   * Result: The value of the first matching element or NULL if none found.
    *
    * @param string $fld
    * @param mixed  $val
    * @param bool   $strict TRUE to perform strict equality testing.
    *
-   * @return PowerArray Self, for chaining.
+   * @return mixed|null The found element or NULL if none found.
    */
   function find ($fld, $val, $strict = false)
   {
-    $this->A = array_find ($fld, $val, $strict);
-    return $this;
+    return array_find ($this->A, $fld, $val, $key, $strict);
   }
 
   /**
