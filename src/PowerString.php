@@ -159,8 +159,8 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    *
    * @return int
    */
-  function count ()
-  {
+  function count(): int
+	{
     return mb_strlen ($this->S);
   }
 
@@ -169,8 +169,8 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return mb_substr ($this->S, $pos - strlen ($search)) === $search;
   }
 
-  function getIterator ()
-  {
+  function getIterator(): Traversable
+	{
     return new ArrayIterator (preg_split ('//u', 'abc', -1, PREG_SPLIT_NO_EMPTY));
   }
 
@@ -229,23 +229,23 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
     return $this;
   }
 
-  function offsetExists ($offset)
-  {
+  function offsetExists($offset): bool
+	{
     return $offset < mb_strlen ($this->S) && $offset >= 0;
   }
 
-  function offsetGet ($offset)
-  {
+  function offsetGet($offset): mixed
+	{
     return $this->charAt ($offset);
   }
 
-  function offsetSet ($offset, $value)
-  {
+  function offsetSet($offset, $value): void
+	{
     $this->S = mb_substr ($this->S, 0, $offset) . $value . mb_substr ($this->S, $offset + 1);
   }
 
-  function offsetUnset ($offset)
-  {
+  function offsetUnset($offset): void
+	{
     $this->S = mb_substr ($this->S, 0, $offset) . mb_substr ($this->S, $offset + 1);
   }
 

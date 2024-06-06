@@ -166,8 +166,8 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return array_binarySearch ($this->A, $what, $probe, $comparator);
   }
 
-  function count ()
-  {
+  function count(): int
+	{
     return count ($this->A);
   }
 
@@ -291,8 +291,8 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
-  function getIterator ()
-  {
+  function getIterator(): Traversable
+	{
     return new ArrayIterator ($this->A);
   }
 
@@ -574,23 +574,23 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return missing ($this->A, $key);
   }
 
-  function offsetExists ($offset)
-  {
+  function offsetExists($offset): bool
+	{
     return isset ($this->A[$offset]);
   }
 
-  function offsetGet ($offset)
-  {
+  function offsetGet($offset): mixed
+	{
     return isset ($this->A[$offset]) ? $this->A[$offset] : null;
   }
 
-  function offsetSet ($offset, $value)
-  {
+  function offsetSet($offset, $value): void
+	{
     $this->A[$offset] = $value;
   }
 
-  function offsetUnset ($offset)
-  {
+  function offsetUnset($offset): void
+	{
     unset ($this->A[$offset]);
   }
 
@@ -671,7 +671,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this;
   }
 
-  public function serialize ()
+  public function __serialize()
+	{
+		return serialize($this->A);
+	}
+
+	public function serialize ()
   {
     return serialize ($this->A);
   }
@@ -779,7 +784,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return array_toClass ($this->A, $className);
   }
 
-  public function unserialize ($serialized)
+  public function __unserialize($serialized)
+	{
+		$this->A = unserialize($serialized);
+	}
+
+	public function unserialize ($serialized)
   {
     $this->A = unserialize ($serialized);
   }
