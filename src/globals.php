@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Creates a new instance of `PowerArray` from the given array.
  * @param array $a
  * @return PowerArray
  */
 
-function PA (array $a = [])
+function PA (array $a = []): PowerArray
 {
   return PowerArray::of ($a);
 }
@@ -18,7 +20,7 @@ function PA (array $a = [])
  * @param array $a Variable.
  * @return PowerArray
  */
-function asPA (array & $a)
+function asPA (array &$a): PowerArray
 {
   return PowerArray::on ($a);
 }
@@ -28,7 +30,7 @@ function asPA (array & $a)
  * @param array $a Variable.
  * @return PowerArray
  */
-function toPA (array & $a)
+function toPA (&$a): PowerArray
 {
   return PowerArray::cast ($a);
 }
@@ -38,7 +40,7 @@ function toPA (array & $a)
  * @param string $str
  * @return PowerString
  */
-function PS ($str = '')
+function PS (string $str = ''): PowerString
 {
   return PowerString::of ($str);
 }
@@ -50,7 +52,7 @@ function PS ($str = '')
  * @param string $str Variable.
  * @return PowerString
  */
-function asPS (& $str)
+function asPS (string &$str): PowerString
 {
   return PowerString::on ($str);
 }
@@ -60,7 +62,7 @@ function asPS (& $str)
  * @param string $str Variable.
  * @return PowerString
  */
-function toPS (& $str)
+function toPS (&$str): PowerString
 {
   return PowerString::cast ($str);
 }
