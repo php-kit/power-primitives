@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 /**
  * An object oriented string API for PHP.
  *
@@ -29,7 +32,7 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    *
    * @var string
    */
-  public $S = '';
+  public string $S = '';
 
   /**
    * Creates a new instance of `PowerString`.
@@ -47,15 +50,24 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $src A variable of type `string`.
    * @return PowerString The same value of `$src` after the typecast.
    */
-  static function cast (& $src)
+  public static function cast (&$src): static
   {
-    $x    = new static;
+    if ($src instanceof static) {
+      return $src;
+    }
+
+    if (!is_string ($src)) {
+      throw new InvalidArgumentException ('PowerString::cast expects a string reference.');
+    }
+
+    $x    = new static ();
     $x->S = $src;
-    $src &= $x;
+    $src  = $x;
+
     return $x;
   }
 
-  static function fromCharCode ($code)
+  public static function fromCharCode (int $code): string
   {
     return mb_chr ($code);
   }
@@ -66,10 +78,11 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $src
    * @return PowerString
    */
-  static function of ($src = '')
+  public static function of (string $src = ''): static
   {
-    $x    = new static ($src);
+    $x    = new static ();
     $x->S = $src;
+
     return $x;
   }
 
@@ -82,11 +95,16 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $src
    * @return PowerString
    */
-  static function on (& $src)
+  public static function on (string &$src): static
   {
     static $x;
-    if (!isset($x)) $x = new static;
+
+    if (!isset ($x)) {
+      $x = new static ();
+    }
+
     $x->S =& $src;
+
     return $x;
   }
 
@@ -97,17 +115,29 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $pattern
    * @return bool true if the `a` flag was specified.
    */
-  private static function toUnicodeRegex (& $pattern)
+  private static function toUnicodeRegex (string &$pattern): bool
   {
-    $d = $pattern[0];
-    list ($exp, $flags) = explode ($d, substr ($pattern, 1), 2);
-    $flags   = str_replace ('a', '', $flags, $isGlobal);
-    $flags   = str_replace ('u', '', $flags) . 'u';
-    $pattern = "$d$exp$d$flags";
-    return $isGlobal;
+    if ($pattern === '') {
+      throw new InvalidArgumentException ('Regular expression cannot be empty.');
+    }
+
+    $delimiter = $pattern[0];
+    $parts     = explode ($delimiter, substr ($pattern, 1), 2);
+
+    if (count ($parts) < 2) {
+      throw new InvalidArgumentException ("Invalid regular expression '{$pattern}'.");
+    }
+
+    [$exp, $flags] = $parts;
+    $count         = 0;
+    $flags         = str_replace ('a', '', $flags, $count);
+    $flags         = str_replace ('u', '', $flags) . 'u';
+    $pattern       = $delimiter . $exp . $delimiter . $flags;
+
+    return $count > 0;
   }
 
-  function __toString ()
+  public function __toString (): string
   {
     return $this->S;
   }
@@ -118,21 +148,24 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $str
    * @return $this
    */
-  function append ($str)
+  public function append (string $str): self
   {
     $this->S .= $str;
+
     return $this;
   }
 
-  function charAt ($index)
+  public function charAt (int $index): string
   {
     $v = mb_substr ($this->S, $index, 1);
+
     return $v === false ? '' : $v;
   }
 
-  function charCodeAt ($index)
+  public function charCodeAt (int $index): int
   {
     $v = mb_substr ($this->S, $index, 1);
+
     return $v === false ? 0 : mb_ord ($v);
   }
 
@@ -141,9 +174,13 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    *
    * @param string|static ...$args
    */
-  function concat ()
+  public function concat (string|self ...$args): self
   {
-    $this->S = $this->S . implode ('', func_get_args ());
+    foreach ($args as $arg) {
+      $this->S .= (string) $arg;
+    }
+
+    return $this;
   }
 
   /**
@@ -159,27 +196,39 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    *
    * @return int
    */
-  function count ()
+  public function count (): int
   {
     return mb_strlen ($this->S);
   }
 
-  function endsWith ($search, $pos = 0)
+  public function endsWith (string $search, int $pos = 0): bool
   {
-    return mb_substr ($this->S, $pos - strlen ($search)) === $search;
+    $length = mb_strlen ($search);
+
+    if ($length === 0) {
+      return true;
+    }
+
+    $start = $pos === 0 ? mb_strlen ($this->S) - $length : $pos - $length;
+
+    if ($start < 0) {
+      return false;
+    }
+
+    return mb_substr ($this->S, $start, $length) === $search;
   }
 
-  function getIterator ()
+  public function getIterator (): Traversable
   {
-    return new ArrayIterator (preg_split ('//u', 'abc', -1, PREG_SPLIT_NO_EMPTY));
+    return new ArrayIterator (mb_str_split ($this->S));
   }
 
-  function includes ($search, $from = 0)
+  public function includes (string $search, int $from = 0): bool
   {
     return mb_strpos ($this->S, $search, $from) !== false;
   }
 
-  function indexOf ($search, $from = 0)
+  public function indexOf (string $search, int $from = 0): int|false
   {
     return mb_strpos ($this->S, $search, $from);
   }
@@ -192,19 +241,24 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $pattern A regular expression pattern.
    * @return int The index of the matched substring.
    */
-  function indexOfPattern ($pattern)
+  public function indexOfPattern (string $pattern): int|false
   {
-    self::toUnicodeRegex ($pattern);
-    if (!preg_match ($pattern, $this->S, $m, PREG_OFFSET_CAPTURE)) return false;
-    return $m[0][1];
+    $patternCopy = $pattern;
+    self::toUnicodeRegex ($patternCopy);
+
+    if (!preg_match ($patternCopy, $this->S, $matches, PREG_OFFSET_CAPTURE)) {
+      return false;
+    }
+
+    return $matches[0][1];
   }
 
-  function lastIndexOf ($search, $from = 0)
+  public function lastIndexOf (string $search, int $from = 0): int|false
   {
     return mb_strrpos ($this->S, $search, $from);
   }
 
-  function length ()
+  public function length (): int
   {
     return mb_strlen ($this->S);
   }
@@ -215,38 +269,83 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param int    $ofs
    * @return array|bool An array with the matches.
    */
-  function match ($pattern, $flags = 0, $ofs = 0)
+  public function match (string $pattern, int $flags = 0, int $ofs = 0): array|false
   {
-    $isGlobal = self::toUnicodeRegex ($pattern);
-    return $isGlobal
-      ? (preg_match_all ($pattern, $this->S, $m, $flags, $ofs) ? $m : false)
-      : (preg_match ($pattern, $this->S, $m, $flags, $ofs) ? $m : false);
+    $patternCopy = $pattern;
+    $isGlobal    = self::toUnicodeRegex ($patternCopy);
+
+    if ($isGlobal) {
+      return preg_match_all ($patternCopy, $this->S, $matches, $flags, $ofs) ? $matches : false;
+    }
+
+    return preg_match ($patternCopy, $this->S, $matches, $flags, $ofs) ? $matches : false;
   }
 
-  function normalize ($form)
+  public function normalize (int $form = Normalizer::FORM_C): self
   {
-    $this->S = Normalizer::normalize ($form);
+    if (!class_exists (Normalizer::class)) {
+      throw new RuntimeException ('ext-intl is required for PowerString::normalize');
+    }
+
+    $normalized = Normalizer::normalize ($this->S, $form);
+
+    if ($normalized === false) {
+      throw new InvalidArgumentException ('Unable to normalize string with the provided form.');
+    }
+
+    $this->S = $normalized;
+
     return $this;
   }
 
-  function offsetExists ($offset)
+  public function offsetExists (mixed $offset): bool
   {
-    return $offset < mb_strlen ($this->S) && $offset >= 0;
+    try {
+      $index = $this->resolveOffset ($offset, false);
+    }
+    catch (InvalidArgumentException) {
+      return false;
+    }
+
+    $length = mb_strlen ($this->S);
+
+    return $index >= 0 && $index < $length;
   }
 
-  function offsetGet ($offset)
+  public function offsetGet (mixed $offset): string
   {
-    return $this->charAt ($offset);
+    $index = $this->resolveOffset ($offset, false);
+
+    return $this->charAt ($index);
   }
 
-  function offsetSet ($offset, $value)
+  public function offsetSet (mixed $offset, mixed $value): void
   {
-    $this->S = mb_substr ($this->S, 0, $offset) . $value . mb_substr ($this->S, $offset + 1);
+    $index       = $this->resolveOffset ($offset, true);
+    $replacement = mb_substr ((string) $value, 0, 1);
+
+    if ($replacement === false) {
+      $replacement = '';
+    }
+
+    $length = mb_strlen ($this->S);
+
+    if ($index >= $length) {
+      $this->S .= $replacement;
+      return;
+    }
+
+    $this->S = mb_substr ($this->S, 0, $index)
+      . $replacement
+      . mb_substr ($this->S, $index + 1);
   }
 
-  function offsetUnset ($offset)
+  public function offsetUnset (mixed $offset): void
   {
-    $this->S = mb_substr ($this->S, 0, $offset) . mb_substr ($this->S, $offset + 1);
+    $index = $this->resolveOffset ($offset, false);
+
+    $this->S = mb_substr ($this->S, 0, $index)
+      . mb_substr ($this->S, $index + 1);
   }
 
   /**
@@ -255,24 +354,38 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $str
    * @return $this
    */
-  function prepend ($str)
+  public function prepend (string $str): self
   {
     $this->S = $str . $this->S;
+
     return $this;
   }
 
-  function repeat ($count)
+  public function repeat (int $count): self
   {
     $this->S = str_repeat ($this->S, $count);
+
     return $this;
   }
 
-  function replace ($pattern, $replace)
+  public function replace (string $pattern, callable|string $replace): self
   {
-    $limit   = self::toUnicodeRegex ($pattern) ? -1 : 1;
-    $this->S = is_callable ($replace)
-      ? preg_replace_callback ($pattern, $replace, $this->S, $limit)
-      : preg_replace ($pattern, $replace, $this->S, $limit);
+    $patternCopy = $pattern;
+    $limit       = self::toUnicodeRegex ($patternCopy) ? -1 : 1;
+
+    if (is_callable ($replace)) {
+      $result = preg_replace_callback ($patternCopy, $replace, $this->S, $limit);
+    }
+    else {
+      $result = preg_replace ($patternCopy, $replace, $this->S, $limit);
+    }
+
+    if ($result === null) {
+      throw new InvalidArgumentException ('Invalid regular expression in replace().');
+    }
+
+    $this->S = $result;
+
     return $this;
   }
 
@@ -286,20 +399,28 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param string $match   [optional] If a variable is specified, it will be set to the matched substring.
    * @return int|bool false if no match was found.
    */
-  function search ($pattern, $from = 0, &$match = null)
+  public function search (string $pattern, int $from = 0, ?string &$match = null): int|false
   {
-    self::toUnicodeRegex ($pattern);
-    if (preg_match ($pattern, $this->S, $m, PREG_OFFSET_CAPTURE)) {
-      list ($match, $ofs) = $m[0];
-      return $ofs;
+    $patternCopy = $pattern;
+    self::toUnicodeRegex ($patternCopy);
+
+    if (preg_match ($patternCopy, $this->S, $matches, PREG_OFFSET_CAPTURE, $from)) {
+      [$match, $offset] = $matches[0];
+
+      return $offset;
     }
+
     return false;
   }
 
-  function slice ($begin, $end = null)
+  public function slice (int $begin, ?int $end = null): self
   {
-    if ($end === null) $end = mb_strlen ($this->S);
-    $this->S = mb_substr ($this->S, $begin, $end < 0 ? $end : $end - $begin);
+    $length = $end === null
+      ? null
+      : ($end < 0 ? $end : $end - $begin);
+
+    $this->S = mb_substr ($this->S, $begin, $length);
+
     return $this;
   }
 
@@ -308,11 +429,13 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param int    $limit  [optional]
    * @return PowerArray
    */
-  function split ($substr, $limit = null)
+  public function split (string $substr, ?int $limit = null): PowerArray
   {
-    return PowerArray::of (isset($limit)
-      ? explode ($substr, $this->S, $limit)
-      : explode ($substr, $this->S));
+    $parts = $limit === null
+      ? explode ($substr, $this->S)
+      : explode ($substr, $this->S, $limit);
+
+    return PowerArray::of ($parts);
   }
 
   /**
@@ -320,10 +443,18 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param int    $limit   [optional]
    * @return PowerArray
    */
-  function splitByPattern ($pattern, $limit = -1)
+  public function splitByPattern (string $pattern, int $limit = -1): PowerArray
   {
-    self::toUnicodeRegex ($pattern);
-    return PowerArray::of (preg_split ($pattern, $this->S, $limit));
+    $patternCopy = $pattern;
+    self::toUnicodeRegex ($patternCopy);
+
+    $parts = preg_split ($patternCopy, $this->S, $limit);
+
+    if ($parts === false) {
+      throw new InvalidArgumentException ('Invalid regular expression supplied to splitByPattern().');
+    }
+
+    return PowerArray::of ($parts);
   }
 
   /**
@@ -331,60 +462,110 @@ class PowerString implements Countable, IteratorAggregate, ArrayAccess
    * @param int    $pos [optional]
    * @return bool
    */
-  function startsWith ($search, $pos = 0)
+  public function startsWith (string $search, int $pos = 0): bool
   {
-    return mb_substr ($this->S, $pos, strlen ($search)) === $search;
+    return mb_substr ($this->S, $pos, mb_strlen ($search)) === $search;
   }
 
-  function substr ($start, $length = null)
+  public function substr (int $start, ?int $length = null): self
   {
-    $this->S = func_num_args () == 1
+    $this->S = $length === null
       ? mb_substr ($this->S, $start)
       : mb_substr ($this->S, $start, $length);
+
     return $this;
   }
 
-  function substring ($indexA, $indexB = null)
+  public function substring (int $indexA, ?int $indexB = null): self
   {
-    $l = mb_strlen ($this->S);
-    if (func_num_args () == 1) $indexB = $l;
-    if ($indexA > $indexB) swap ($indexA, $indexB);
-    if ($indexA < 0) $indexA = 0;
-    if ($indexB < 0) $indexB = 0;
-    if ($indexA > $l) $indexA = $l;
-    if ($indexB > $l) $indexB = $l;
+    $length = mb_strlen ($this->S);
+
+    if ($indexB === null) {
+      $indexB = $length;
+    }
+
+    if ($indexA > $indexB) {
+      self::swapIndexes ($indexA, $indexB);
+    }
+
+    $indexA = max (0, $indexA);
+    $indexB = max (0, $indexB);
+    $indexA = min ($length, $indexA);
+    $indexB = min ($length, $indexB);
+
     $this->S = mb_substr ($this->S, $indexA, $indexB - $indexA);
+
     return $this;
   }
 
-  function toLowerCase ()
+  public function toLowerCase (): self
   {
     $this->S = mb_strtolower ($this->S);
+
     return $this;
   }
 
-  function toUpperCase ()
+  public function toUpperCase (): self
   {
     $this->S = mb_strtoupper ($this->S);
+
     return $this;
   }
 
-  function trim ()
+  public function trim (): self
   {
     $this->S = preg_replace ('/^\s+|\s+$/u', '', $this->S);
+
     return $this;
   }
 
-  function trimLeft ()
+  public function trimLeft (): self
   {
     $this->S = preg_replace ('/^\s+/u', '', $this->S);
+
     return $this;
   }
 
-  function trimRight ()
+  public function trimRight (): self
   {
     $this->S = preg_replace ('/\s+$/u', '', $this->S);
+
     return $this;
   }
 
+  private static function swapIndexes (int &$a, int &$b): void
+  {
+    $tmp = $a;
+    $a   = $b;
+    $b   = $tmp;
+  }
+
+  private function resolveOffset (mixed $offset, bool $allowEnd): int
+  {
+    if (is_int ($offset)) {
+      $index = $offset;
+    }
+    elseif (is_string ($offset) && preg_match ('/^-?\d+$/', $offset)) {
+      $index = (int) $offset;
+    }
+    else {
+      throw new InvalidArgumentException ('String offsets must be integers.');
+    }
+
+    $length = mb_strlen ($this->S);
+
+    if ($index < 0) {
+      $index += $length;
+    }
+
+    if ($index < 0) {
+      throw new InvalidArgumentException ('Offset is out of bounds.');
+    }
+
+    if ($index > $length || (!$allowEnd && $index === $length)) {
+      throw new InvalidArgumentException ('Offset is out of bounds.');
+    }
+
+    return $index;
+  }
 }

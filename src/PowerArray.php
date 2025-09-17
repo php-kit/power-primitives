@@ -1,15 +1,18 @@
 <?php
 
-class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializable
+declare(strict_types=1);
+
+
+class PowerArray implements ArrayAccess, Countable, IteratorAggregate
 {
   /**
    * The array representation of this instance.
    *
    * Treat this as read-only - **do not modify** it directly!
    *
-   * @var array
+   * @var array<int|string, mixed>
    */
-  public $A;
+  public array $A = [];
 
   /**
    * Creates an uninitialized instance of `PowerArray` that should not be used until the `A` property is set.
@@ -26,11 +29,20 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array $src A variable of type array.
    * @return static The same value of `$src` after the typecast.
    */
-  static function cast (array & $src)
+  public static function cast (&$src): static
   {
-    $x    = new static;
+    if ($src instanceof static) {
+      return $src;
+    }
+
+    if (!is_array ($src)) {
+      throw new InvalidArgumentException ('PowerArray::cast expects an array reference.');
+    }
+
+    $x    = new static ();
     $x->A = $src;
-    $src &= $x;
+    $src  = $x;
+
     return $x;
   }
 
@@ -40,22 +52,25 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array|Iterator|IteratorAggregate $src
    * @return static
    */
-  static function of ($src)
+  public static function of (iterable $src = []): static
   {
-    $x = new static;
-    switch (true) {
-      case is_array ($src):
-        $x->A = $src;
-        break;
-      case $src instanceof IteratorAggregate:
-        $x->A = iterator_to_array ($src->getIterator ());
-        break;
-      case $src instanceof Iterator:
-        $x->A = iterator_to_array ($src);
-        break;
-      default:
-        throw new InvalidArgumentException;
+    $x = new static ();
+
+    if (is_array ($src)) {
+      $x->A = $src;
+      return $x;
     }
+
+    if ($src instanceof IteratorAggregate) {
+      $src = $src->getIterator ();
+    }
+
+    if (!($src instanceof Iterator)) {
+      throw new InvalidArgumentException ('PowerArray::of expects an array or iterable source.');
+    }
+
+    $x->A = iterator_to_array ($src);
+
     return $x;
   }
 
@@ -146,9 +161,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
     return $this->A;
   }
 
-  function append ()
+  public function append (...$values): self
   {
-    call_user_func_array ('array_push', array_merge ($this->A, func_get_args ()));
+    foreach ($values as $value) {
+      $this->A[] = $value;
+    }
+
     return $this;
   }
 
@@ -161,12 +179,34 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return bool True a match was found.
    */
-  function binarySearch ($what, &$probe, $comparator)
+  public function binarySearch (mixed $what, int &$probe, callable $comparator): bool
   {
-    return array_binarySearch ($this->A, $what, $probe, $comparator);
+    $low  = 0;
+    $high = count ($this->A) - 1;
+
+    while ($low <= $high) {
+      $mid = intdiv ($low + $high, 2);
+      $cmp = $comparator ($this->A[$mid], $what);
+
+      if ($cmp === 0) {
+        $probe = $mid;
+        return true;
+      }
+
+      if ($cmp < 0) {
+        $low = $mid + 1;
+      }
+      else {
+        $high = $mid - 1;
+      }
+    }
+
+    $probe = $low;
+
+    return false;
   }
 
-  function count ()
+  public function count (): int
   {
     return count ($this->A);
   }
@@ -180,9 +220,22 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function extract (array $keys)
+  public function extract (array $keys): self
   {
-    $this->A = array_extract ($this->A, $keys);
+    $result = [];
+
+    foreach ($this->A as $outerKey => $item) {
+      $row = [];
+
+      foreach ($keys as $field) {
+        $row[] = self::readField ($item, $field, null);
+      }
+
+      $result[$outerKey] = $row;
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -194,9 +247,40 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @return PowerArray Self, for chaining.
    * @see PowerArray::extract
    */
-  function fields (array $keys, $def = null)
+  public function fields (array $keys, mixed $def = null): self
   {
-    $this->A = array_fields ($this->A, $keys, $def);
+    if ($this->A === []) {
+      $this->A = [];
+      return $this;
+    }
+
+    $first = reset ($this->A);
+
+    if (is_array ($first) || is_object ($first)) {
+      $result = [];
+
+      foreach ($this->A as $outerKey => $item) {
+        $row = [];
+
+        foreach ($keys as $field) {
+          $row[$field] = self::readField ($item, $field, $def);
+        }
+
+        $result[$outerKey] = $row;
+      }
+
+      $this->A = $result;
+      return $this;
+    }
+
+    $result = [];
+
+    foreach ($keys as $field) {
+      $result[$field] = $this->A[$field] ?? $def;
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -209,9 +293,10 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function filter (callable $fn)
+  public function filter (callable $fn): self
   {
     $this->A = array_filter ($this->A, $fn, ARRAY_FILTER_USE_BOTH);
+
     return $this;
   }
 
@@ -226,9 +311,17 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed|null The found element or NULL if none found.
    */
-  function find ($fld, $val, $strict = false)
+  public function find (string|int $fld, mixed $val, bool $strict = false)
   {
-    return array_find ($this->A, $fld, $val, $key, $strict);
+    foreach ($this->A as $item) {
+      $candidate = self::readField ($item, $fld, null);
+
+      if ($strict ? $candidate === $val : $candidate == $val) {
+        return $item;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -241,9 +334,20 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function findAll ($fld, $val, $strict = false)
+  public function findAll (string|int $fld, mixed $val, bool $strict = false): self
   {
-    $this->A = array_findAll ($this->A, $fld, $val, $strict);
+    $result = [];
+
+    foreach ($this->A as $key => $item) {
+      $candidate = self::readField ($item, $fld, null);
+
+      if ($strict ? $candidate === $val : $candidate == $val) {
+        $result[$key] = $item;
+      }
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -252,9 +356,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed|null null if the array is empty.
    */
-  function first ()
+  public function first (): mixed
   {
-    return $this->A ? $this->A[0] : null;
+    return $this->A ? reset ($this->A) : null;
   }
 
   /**
@@ -268,9 +372,16 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function getColumn ($key)
+  public function getColumn (string|int $key): self
   {
-    $this->A = array_getColumn ($this->A, $key);
+    $result = [];
+
+    foreach ($this->A as $outerKey => $item) {
+      $result[$outerKey] = self::readField ($item, $key, null);
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -285,13 +396,28 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function getColumns (array $keys)
+  public function getColumns (array $keys): self
   {
-    $this->A = array_getColumns ($this->A, $keys);
+    $result = [];
+
+    foreach ($this->A as $outerKey => $item) {
+      $row = [];
+
+      foreach ($keys as $key) {
+        if (self::hasField ($item, $key)) {
+          $row[$key] = self::readField ($item, $key, null);
+        }
+      }
+
+      $result[$outerKey] = $row;
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
-  function getIterator ()
+  public function getIterator (): Traversable
   {
     return new ArrayIterator ($this->A);
   }
@@ -385,9 +511,10 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param string ...$args The field names.
    * @return PowerArray Self, for chaining.
    */
-  function group ()
+  public function group (...$groupers): self
   {
-    $this->A = call_user_func_array ('array_group', array_merge ([$this->A], func_get_args ()));
+    $this->A = self::groupByRecursive ($this->A, $groupers);
+
     return $this;
   }
 
@@ -398,9 +525,16 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function hidrate ($className)
+  public function hidrate (string $className): self
   {
-    $this->A = array_hidrate ($this->A, $className);
+    $result = [];
+
+    foreach ($this->A as $key => $item) {
+      $result[$key] = self::hydrate ($className, $item);
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -411,9 +545,27 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param string $field The field name.
    * @return PowerArray Self, for chaining.
    */
-  function indexBy ($field)
+  public function indexBy (string|int $field): self
   {
-    $this->A = array_indexBy ($this->A, $field);
+    $result = [];
+
+    foreach ($this->A as $item) {
+      $value = self::readField ($item, $field, null);
+
+      if (is_int ($value) || is_string ($value)) {
+        $result[$value] = $item;
+        continue;
+      }
+
+      if ($value === null) {
+        continue;
+      }
+
+      $result[(string) $value] = $item;
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -428,7 +580,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                     return the keys for all matching values, use array_keys with the optional search_value
    *                     parameter instead.
    */
-  function indexOf ($value, $strict = true)
+  public function indexOf (mixed $value, bool $strict = true): int|string|false
   {
     return array_search ($value, $this->A, $strict);
   }
@@ -442,9 +594,18 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function iterateColumns (array $cols, callable $fn)
+  public function iterateColumns (array $cols, callable $fn): self
   {
-    array_iterateColumns ($this->A, $cols, $fn);
+    foreach ($this->A as $item) {
+      $args = [];
+
+      foreach ($cols as $col) {
+        $args[] = self::readField ($item, $col, null);
+      }
+
+      $fn (...$args);
+    }
+
     return $this;
   }
 
@@ -454,9 +615,26 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param string $glue
    * @return PowerString
    */
-  function join ($glue = '')
+  public function join (string $glue = ''): PowerString
   {
-    return PowerString::of (implode ($glue, $this->A));
+    $parts = array_map (
+      static function ($value): string {
+        if (is_scalar ($value) || $value === null) {
+          return (string) $value;
+        }
+
+        if (is_object ($value) && method_exists ($value, '__toString')) {
+          return (string) $value;
+        }
+
+        $encoded = json_encode ($value, JSON_UNESCAPED_UNICODE);
+
+        return $encoded === false ? serialize ($value) : $encoded;
+      },
+      $this->A
+    );
+
+    return PowerString::of (implode ($glue, $parts));
   }
 
   /**
@@ -468,10 +646,36 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function joinRecords ($array, $field)
+  public function joinRecords (array|self $array, string $field): self
   {
-    // NOT IMPLEMENTED!!! DUMMY CODE!
-    $this->A = array_join ($this->A, $array instanceof self ? $array->A : $array, $field);
+    $other = $array instanceof self ? $array->A : $array;
+    $index = [];
+
+    foreach ($other as $record) {
+      $key = self::readField ($record, $field, null);
+
+      if ($key === null) {
+        continue;
+      }
+
+      $index[$key] = $record;
+    }
+
+    $result = [];
+
+    foreach ($this->A as $key => $record) {
+      $joinKey = self::readField ($record, $field, null);
+
+      if ($joinKey !== null && array_key_exists ($joinKey, $index)) {
+        $result[$key] = self::mergeRecord ($record, $index[$joinKey]);
+      }
+      else {
+        $result[$key] = $record;
+      }
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -480,9 +684,10 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function keys ()
+  public function keys (): self
   {
     $this->A = array_keys ($this->A);
+
     return $this;
   }
 
@@ -493,9 +698,10 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param bool|false $strict Determines if strict comparison (===) should be used during the search.
    * @return PowerArray
    */
-  function keysOf ($value, $strict = true)
+  public function keysOf (mixed $value, bool $strict = true): self
   {
     $this->A = array_keys ($this->A, $value, $strict);
+
     return $this;
   }
 
@@ -504,9 +710,16 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed|null null if the array is empty.
    */
-  function last ()
+  public function last (): mixed
   {
-    return $this->A ? array_slice ($this->A, -1)[0] : null;
+    if (!$this->A) {
+      return null;
+    }
+
+    $last = end ($this->A);
+    reset ($this->A);
+
+    return $last;
   }
 
   /**
@@ -524,9 +737,16 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                                   callbacks, as they will complain if an extra argument is provided.
    * @return PowerArray Self, for chaining.
    */
-  function map (callable $fn, $useKeys = true)
+  public function map (callable $fn, bool $useKeys = true): self
   {
-    $this->A = map ($this->A, $fn, $useKeys);
+    $result = [];
+
+    foreach ($this->A as $key => $value) {
+      $result[$key] = $useKeys ? $fn ($value, $key) : $fn ($value);
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -541,9 +761,22 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function mapColumns (array $cols, callable $fn)
+  public function mapColumns (array $cols, callable $fn): self
   {
-    $this->A = array_mapColumns ($this->A, $cols, $fn);
+    $result = [];
+
+    foreach ($this->A as $key => $item) {
+      $args = [];
+
+      foreach ($cols as $col) {
+        $args[] = self::readField ($item, $col, null);
+      }
+
+      $result[$key] = $fn (...$args);
+    }
+
+    $this->A = $result;
+
     return $this;
   }
 
@@ -552,12 +785,15 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param array|PowerArray $v
    */
-  function merge ($v)
+  public function merge (array|self $v): self
   {
-    if (is_array ($v)) array_mergeInto ($this->A, $v);
-    else if ($v instanceof static)
-      array_mergeInto ($this->A, $v->A);
-    else throw new InvalidArgumentException;
+    $values = $v instanceof static ? $v->A : $v;
+
+    foreach ($values as $key => $value) {
+      $this->A[$key] = $value;
+    }
+
+    return $this;
   }
 
   /**
@@ -569,27 +805,38 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @return bool True if the key is missing or the corresponding value in the array is empty (null or empty string).
    * @see is_empty()
    */
-  function missing ($key)
+  public function missing (string|int $key): bool
   {
-    return missing ($this->A, $key);
+    if (!array_key_exists ($key, $this->A)) {
+      return true;
+    }
+
+    $value = $this->A[$key];
+
+    return $value === null || $value === '';
   }
 
-  function offsetExists ($offset)
+  public function offsetExists (mixed $offset): bool
   {
-    return isset ($this->A[$offset]);
+    return array_key_exists ($offset, $this->A);
   }
 
-  function offsetGet ($offset)
+  public function offsetGet (mixed $offset): mixed
   {
-    return isset ($this->A[$offset]) ? $this->A[$offset] : null;
+    return $this->A[$offset] ?? null;
   }
 
-  function offsetSet ($offset, $value)
+  public function offsetSet (mixed $offset, mixed $value): void
   {
+    if ($offset === null) {
+      $this->A[] = $value;
+      return;
+    }
+
     $this->A[$offset] = $value;
   }
 
-  function offsetUnset ($offset)
+  public function offsetUnset (mixed $offset): void
   {
     unset ($this->A[$offset]);
   }
@@ -600,13 +847,63 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function orderBy ()
+  public function orderBy (...$criteria): self
   {
-    $this->A = call_user_func_array ('array_orderBy', array_merge ([$this->A], func_get_args ()));
+    if (!$criteria) {
+      return $this->sort ();
+    }
+
+    $sorts = [];
+    $i     = 0;
+    $count = count ($criteria);
+
+    while ($i < $count) {
+      $field = $criteria[$i++];
+      $dir   = SORT_ASC;
+      $flags = SORT_REGULAR;
+
+      if ($i < $count && is_int ($criteria[$i]) && ($criteria[$i] === SORT_ASC || $criteria[$i] === SORT_DESC)) {
+        $dir = $criteria[$i++];
+      }
+
+      if ($i < $count && is_int ($criteria[$i]) && !in_array ($criteria[$i], [SORT_ASC, SORT_DESC], true)) {
+        $flags = $criteria[$i++];
+      }
+
+      if (!is_string ($field) && !is_int ($field) && !is_callable ($field)) {
+        throw new InvalidArgumentException ('orderBy expects field names or callables.');
+      }
+
+      $sorts[] = ['field' => $field, 'dir' => $dir, 'flags' => $flags];
+    }
+
+    $data = $this->A;
+
+    uasort ($data, function ($a, $b) use ($sorts) {
+      foreach ($sorts as $sort) {
+        $valueA = is_callable ($sort['field'])
+          ? $sort['field'] ($a)
+          : self::readField ($a, $sort['field'], null);
+        $valueB = is_callable ($sort['field'])
+          ? $sort['field'] ($b)
+          : self::readField ($b, $sort['field'], null);
+
+        $cmp = self::compareValues ($valueA, $valueB, $sort['flags']);
+
+        if ($cmp !== 0) {
+          return $sort['dir'] === SORT_DESC ? -$cmp : $cmp;
+        }
+      }
+
+      return 0;
+    });
+
+    $this->A = $data;
+
     return $this;
   }
 
-  function pop ()
+  public function pop (): mixed
   {
     return array_pop ($this->A);
   }
@@ -617,9 +914,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param mixed ...$args One or more elements to prepend to the array.
    * @return PowerArray
    */
-  function prepend ()
+  public function prepend (...$values): self
   {
-    call_user_func_array ('array_unshift', array_merge ($this->A, func_get_args ()));
+    if ($values) {
+      array_unshift ($this->A, ...$values);
+    }
+
     return $this;
   }
 
@@ -628,9 +928,13 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function prune ()
+  public function prune (): self
   {
-    $this->A = array_prune ($this->A);
+    $this->A = array_filter (
+      $this->A,
+      static fn ($value) => $value !== null
+    );
+
     return $this;
   }
 
@@ -639,9 +943,13 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function prune_empty ()
+  public function prune_empty (): self
   {
-    $this->A = array_prune_empty ($this->A);
+    $this->A = array_filter (
+      $this->A,
+      static fn ($value) => !($value === null || $value === '')
+    );
+
     return $this;
   }
 
@@ -653,7 +961,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                          as a final result in case the array is empty.
    * @return mixed The resulting value. If the array is empty and initial is not passed, it returns `null`.
    */
-  function reduce (callable $fn, $initial = null)
+  public function reduce (callable $fn, mixed $initial = null): mixed
   {
     return array_reduce ($this->A, $fn, $initial);
   }
@@ -665,15 +973,16 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function reindex ()
+  public function reindex (): self
   {
     $this->A = array_values ($this->A);
+
     return $this;
   }
 
-  public function serialize ()
+  public function serialize (): string
   {
-    return serialize ($this->A);
+    return serialize ($this->__serialize ());
   }
 
   /**
@@ -681,7 +990,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed
    */
-  function shift ()
+  public function shift (): mixed
   {
     return array_shift ($this->A);
   }
@@ -699,9 +1008,12 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                           change this behaviour by setting `$preserveKeys` to true.
    * @return PowerArray Self, for chaining.
    */
-  function slice ($start, $len, $preserveKeys = false)
+  public function slice (int $start, ?int $len = null, bool $preserveKeys = false): self
   {
-    $this->A = array_slice ($this->A, $start, $len, $preserveKeys);
+    $this->A = $len === null
+      ? array_slice ($this->A, $start, null, $preserveKeys)
+      : array_slice ($this->A, $start, $len, $preserveKeys);
+
     return $this;
   }
 
@@ -711,9 +1023,15 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param int $flags [optional] See {@see sort()}
    * @return PowerArray Self, for chaining.
    */
-  function sort ($flags = null)
+  public function sort (?int $flags = null): self
   {
-    sort ($this->A, $flags);
+    if ($flags === null) {
+      sort ($this->A);
+    }
+    else {
+      sort ($this->A, $flags);
+    }
+
     return $this;
   }
 
@@ -737,9 +1055,19 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                                element is an array itself.
    * @return PowerArray Self, for chaining.
    */
-  function splice ($offset, $length = null, array $replacement = null)
+  public function splice (int $offset, ?int $length = null, ?array $replacement = null): self
   {
-    array_splice ($this->A, $offset, $length, $replacement);
+    if ($replacement === null) {
+      $replacement = [];
+    }
+
+    if ($length === null) {
+      array_splice ($this->A, $offset, count ($this->A), $replacement);
+    }
+    else {
+      array_splice ($this->A, $offset, $length, $replacement);
+    }
+
     return $this;
   }
 
@@ -749,9 +1077,14 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param int $count [optional] How many elements to discard.
    * @return PowerArray
    */
-  function stripFirst ($count = 1)
+  public function stripFirst (int $count = 1): self
   {
+    if ($count <= 0) {
+      return $this;
+    }
+
     $this->A = array_slice ($this->A, $count);
+
     return $this;
   }
 
@@ -761,9 +1094,16 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param int $count [optional] How many elements to discard.
    * @return PowerArray
    */
-  function stripLast ($count = 1)
+  public function stripLast (int $count = 1): self
   {
-    $this->A = array_slice ($this->A, 0, -$count);
+    if ($count <= 0) {
+      return $this;
+    }
+
+    $this->A = $count >= count ($this->A)
+      ? []
+      : array_slice ($this->A, 0, -$count);
+
     return $this;
   }
 
@@ -774,14 +1114,156 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed An instance of the specified class.
    */
-  function toClass ($className)
+  public function toClass (string $className): object
   {
-    return array_toClass ($this->A, $className);
+    return self::hydrate ($className, $this->A);
   }
 
-  public function unserialize ($serialized)
+  public function __serialize (): array
   {
-    $this->A = unserialize ($serialized);
+    return ['A' => $this->A];
   }
 
+  public function __unserialize (array $data): void
+  {
+    $this->A = isset ($data['A']) && is_array ($data['A']) ? $data['A'] : [];
+  }
+
+  public function unserialize (string $serialized): void
+  {
+    $data = unserialize ($serialized, ['allowed_classes' => true]);
+
+    if (!is_array ($data)) {
+      throw new UnexpectedValueException ('Invalid serialization payload for PowerArray.');
+    }
+
+    $this->__unserialize ($data);
+  }
+
+  /**
+   * @param array<int|string, mixed> $data
+   * @param array<int, string|callable> $groupers
+   * @return array<int|string, mixed>
+   */
+  private static function groupByRecursive (array $data, array $groupers): array
+  {
+    if ($groupers === []) {
+      return $data;
+    }
+
+    $grouper = array_shift ($groupers);
+    $groups  = [];
+
+    foreach ($data as $item) {
+      $key = is_callable ($grouper)
+        ? $grouper ($item)
+        : self::readField ($item, $grouper, null);
+
+      if (is_object ($key)) {
+        $key = spl_object_hash ($key);
+      }
+      elseif (is_array ($key)) {
+        $key = serialize ($key);
+      }
+
+      $groups[$key][] = $item;
+    }
+
+    if ($groupers === []) {
+      return $groups;
+    }
+
+    foreach ($groups as $key => $items) {
+      $groups[$key] = self::groupByRecursive ($items, $groupers);
+    }
+
+    return $groups;
+  }
+
+  private static function hydrate (string $className, mixed $data): object
+  {
+    if ($data instanceof $className) {
+      return clone $data;
+    }
+
+    $object = new $className ();
+
+    foreach ((array) $data as $key => $value) {
+      $object->{$key} = $value;
+    }
+
+    return $object;
+  }
+
+  private static function mergeRecord (mixed $left, mixed $right): mixed
+  {
+    if (is_array ($left)) {
+      $result = $left;
+
+      foreach ((array) $right as $key => $value) {
+        $result[$key] = $value;
+      }
+
+      return $result;
+    }
+
+    if (is_object ($left)) {
+      $result = clone $left;
+
+      foreach ((array) $right as $key => $value) {
+        $result->{$key} = $value;
+      }
+
+      return $result;
+    }
+
+    return $right;
+  }
+
+  private static function hasField (mixed $item, string|int $field): bool
+  {
+    if (is_array ($item)) {
+      return array_key_exists ($field, $item);
+    }
+
+    if ($item instanceof ArrayAccess) {
+      return $item->offsetExists ($field);
+    }
+
+    if (is_object ($item)) {
+      return property_exists ($item, (string) $field);
+    }
+
+    return false;
+  }
+
+  private static function readField (mixed $item, string|int $field, mixed $default): mixed
+  {
+    if (is_array ($item)) {
+      return array_key_exists ($field, $item) ? $item[$field] : $default;
+    }
+
+    if ($item instanceof ArrayAccess && $item->offsetExists ($field)) {
+      return $item[$field];
+    }
+
+    if (is_object ($item) && property_exists ($item, (string) $field)) {
+      return $item->{$field};
+    }
+
+    return $default;
+  }
+
+  private static function compareValues (mixed $a, mixed $b, int $flags): int
+  {
+    $mode      = $flags & ~SORT_FLAG_CASE;
+    $ignoreCase = (bool) ($flags & SORT_FLAG_CASE);
+
+    return match ($mode) {
+      SORT_STRING => $ignoreCase ? strcasecmp ((string) $a, (string) $b) : strcmp ((string) $a, (string) $b),
+      SORT_NATURAL => $ignoreCase ? strnatcasecmp ((string) $a, (string) $b) : strnatcmp ((string) $a, (string) $b),
+      SORT_NUMERIC => ($a <=> $b),
+      default => ($a <=> $b),
+    };
+  }
 }
