@@ -43,13 +43,17 @@ final class TestSuite
         $total = count($this->results);
         $failures = array_filter($this->results, static fn(array $result): bool => !$result['success']);
 
-        foreach ($this->results as $result) {
+        $digits = max(2, strlen((string) $total));
+
+        foreach ($this->results as $index => $result) {
+            $number = str_pad((string) ($index + 1), $digits, '0', STR_PAD_LEFT);
+
             if ($result['success']) {
-                echo "✔ {$result['name']}\n";
+                echo "{$number}. ✔ {$result['name']}\n";
             } else {
                 /** @var Throwable $error */
                 $error = $result['error'];
-                echo "✖ {$result['name']}\n   {$error->getMessage()}\n";
+                echo "{$number}. ✖ {$result['name']}\n   {$error->getMessage()}\n";
             }
         }
 

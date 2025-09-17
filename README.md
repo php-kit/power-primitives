@@ -4,12 +4,10 @@
 
 ## Why Power Primitives?
 
-Plain PHP arrays and strings are wonderfully flexible, yet they quickly turn
-into walls of procedural helper calls. Loop counters, temporary variables and
-manual checks for missing keys clutter the happy path of your application. The
-`PowerArray` and `PowerString` classes wrap native values in a lightweight
-object-oriented façade that embraces PHP 8 and makes common transformations
-readable, chainable and safe.
+Plain PHP arrays and strings are wonderfully flexible, yet they quickly turn into walls of procedural helper calls.
+Loop counters, temporary variables and manual checks for missing keys clutter the happy path of your application.
+
+The `PowerArray` and `PowerString` classes wrap native values in a lightweight object-oriented facade that embraces PHP 8 and makes common transformations readable, chainable and safe.
 
 ```php
 <?php
@@ -22,8 +20,7 @@ $emails = PA($users)
     ->all();
 ```
 
-No temporary arrays, no custom utility library scattered throughout your
-project—just fluent, discoverable methods that compose naturally.
+No temporary arrays, no custom utility library scattered throughout your project — just fluent, discoverable methods that compose naturally.
 
 ## Installation
 
