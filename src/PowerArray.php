@@ -228,7 +228,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    */
   function find ($fld, $val, $strict = false)
   {
-    return array_find ($this->A, $fld, $val, $key, $strict);
+    return array_find_by_key ($this->A, $fld, $val, $key, $strict);
   }
 
   /**
