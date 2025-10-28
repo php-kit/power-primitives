@@ -26,7 +26,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array $src A variable of type array.
    * @return static The same value of `$src` after the typecast.
    */
-  static function cast (array & $src)
+  static function cast(array &$src)
   {
     $x    = new static;
     $x->A = $src;
@@ -40,18 +40,18 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array|Iterator|IteratorAggregate $src
    * @return static
    */
-  static function of ($src)
+  static function of($src)
   {
     $x = new static;
     switch (true) {
-      case is_array ($src):
+      case is_array($src):
         $x->A = $src;
         break;
       case $src instanceof IteratorAggregate:
-        $x->A = iterator_to_array ($src->getIterator ());
+        $x->A = iterator_to_array($src->getIterator());
         break;
       case $src instanceof Iterator:
-        $x->A = iterator_to_array ($src);
+        $x->A = iterator_to_array($src);
         break;
       default:
         throw new InvalidArgumentException;
@@ -68,15 +68,15 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param array $src
    * @return static
    */
-  static function on (array & $src)
+  static function on(array &$src)
   {
     static $x;
     if (!isset($x)) $x = new static;
-    $x->A =& $src;
+    $x->A = &$src;
     return $x;
   }
 
-  public function __debugInfo ()
+  public function __debugInfo()
   {
     return $this->A;
   }
@@ -92,9 +92,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed
    */
-  function __get ($key)
+  function __get($key)
   {
-    return isset ($this->A[$key]) ? $this->A[$key] : null;
+    return isset($this->A[$key]) ? $this->A[$key] : null;
   }
 
   /**
@@ -103,7 +103,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param String $key
    * @param mixed  $value
    */
-  function __set ($key, $value)
+  function __set($key, $value)
   {
     $this->A[$key] = $value;
   }
@@ -115,9 +115,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return Boolean
    */
-  function __isset ($key)
+  function __isset($key)
   {
-    return isset ($this->A[$key]);
+    return isset($this->A[$key]);
   }
 
   /**
@@ -126,9 +126,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return string
    */
-  function __toString ()
+  function __toString()
   {
-    return var_export ($this->A, true);
+    return var_export($this->A, true);
   }
 
   /**
@@ -136,19 +136,19 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param String $key
    */
-  function __unset ($key)
+  function __unset($key)
   {
-    unset ($this->A[$key]);
+    unset($this->A[$key]);
   }
 
-  function all ()
+  function all()
   {
     return $this->A;
   }
 
-  function append ()
+  function append()
   {
-    call_user_func_array ('array_push', array_merge ($this->A, func_get_args ()));
+    call_user_func_array('array_push', array_merge($this->A, func_get_args()));
     return $this;
   }
 
@@ -161,14 +161,14 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return bool True a match was found.
    */
-  function binarySearch ($what, &$probe, $comparator)
+  function binarySearch($what, &$probe, $comparator)
   {
-    return array_binarySearch ($this->A, $what, $probe, $comparator);
+    return array_binarySearch($this->A, $what, $probe, $comparator);
   }
 
   function count(): int
-	{
-    return count ($this->A);
+  {
+    return count($this->A);
   }
 
   /**
@@ -180,9 +180,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function extract (array $keys)
+  function extract(array $keys)
   {
-    $this->A = array_extract ($this->A, $keys);
+    $this->A = array_extract($this->A, $keys);
     return $this;
   }
 
@@ -194,9 +194,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @return PowerArray Self, for chaining.
    * @see PowerArray::extract
    */
-  function fields (array $keys, $def = null)
+  function fields(array $keys, $def = null)
   {
-    $this->A = array_fields ($this->A, $keys, $def);
+    $this->A = array_fields($this->A, $keys, $def);
     return $this;
   }
 
@@ -209,9 +209,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function filter (callable $fn)
+  function filter(callable $fn)
   {
-    $this->A = array_filter ($this->A, $fn, ARRAY_FILTER_USE_BOTH);
+    $this->A = array_filter($this->A, $fn, ARRAY_FILTER_USE_BOTH);
     return $this;
   }
 
@@ -226,9 +226,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed|null The found element or NULL if none found.
    */
-  function find ($fld, $val, $strict = false)
+  function find($fld, $val, $strict = false)
   {
-    return array_find_by_key ($this->A, $fld, $val, $key, $strict);
+    return array_find_by_key($this->A, $fld, $val, $key, $strict);
   }
 
   /**
@@ -241,9 +241,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function findAll ($fld, $val, $strict = false)
+  function findAll($fld, $val, $strict = false)
   {
-    $this->A = array_findAll ($this->A, $fld, $val, $strict);
+    $this->A = array_findAll($this->A, $fld, $val, $strict);
     return $this;
   }
 
@@ -252,7 +252,7 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed|null null if the array is empty.
    */
-  function first ()
+  function first()
   {
     return $this->A ? $this->A[0] : null;
   }
@@ -268,9 +268,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function getColumn ($key)
+  function getColumn($key)
   {
-    $this->A = array_getColumn ($this->A, $key);
+    $this->A = array_getColumn($this->A, $key);
     return $this;
   }
 
@@ -285,15 +285,15 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function getColumns (array $keys)
+  function getColumns(array $keys)
   {
-    $this->A = array_getColumns ($this->A, $keys);
+    $this->A = array_getColumns($this->A, $keys);
     return $this;
   }
 
   function getIterator(): Traversable
-	{
-    return new ArrayIterator ($this->A);
+  {
+    return new ArrayIterator($this->A);
   }
 
   /**
@@ -385,9 +385,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param string ...$args The field names.
    * @return PowerArray Self, for chaining.
    */
-  function group ()
+  function group()
   {
-    $this->A = call_user_func_array ('array_group', array_merge ([$this->A], func_get_args ()));
+    $this->A = call_user_func_array('array_group', array_merge([$this->A], func_get_args()));
     return $this;
   }
 
@@ -398,9 +398,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function hidrate ($className)
+  function hidrate($className)
   {
-    $this->A = array_hidrate ($this->A, $className);
+    $this->A = array_hidrate($this->A, $className);
     return $this;
   }
 
@@ -411,9 +411,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param string $field The field name.
    * @return PowerArray Self, for chaining.
    */
-  function indexBy ($field)
+  function indexBy($field)
   {
-    $this->A = array_indexBy ($this->A, $field);
+    $this->A = array_indexBy($this->A, $field);
     return $this;
   }
 
@@ -428,9 +428,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                     return the keys for all matching values, use array_keys with the optional search_value
    *                     parameter instead.
    */
-  function indexOf ($value, $strict = true)
+  function indexOf($value, $strict = true)
   {
-    return array_search ($value, $this->A, $strict);
+    return array_search($value, $this->A, $strict);
   }
 
   /**
@@ -442,9 +442,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function iterateColumns (array $cols, callable $fn)
+  function iterateColumns(array $cols, callable $fn)
   {
-    array_iterateColumns ($this->A, $cols, $fn);
+    array_iterateColumns($this->A, $cols, $fn);
     return $this;
   }
 
@@ -454,9 +454,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param string $glue
    * @return PowerString
    */
-  function join ($glue = '')
+  function join($glue = '')
   {
-    return PowerString::of (implode ($glue, $this->A));
+    return PowerString::of(implode($glue, $this->A));
   }
 
   /**
@@ -468,10 +468,10 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function joinRecords ($array, $field)
+  function joinRecords($array, $field)
   {
     // NOT IMPLEMENTED!!! DUMMY CODE!
-    $this->A = array_join ($this->A, $array instanceof self ? $array->A : $array, $field);
+    $this->A = array_join($this->A, $array instanceof self ? $array->A : $array, $field);
     return $this;
   }
 
@@ -480,9 +480,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function keys ()
+  function keys()
   {
-    $this->A = array_keys ($this->A);
+    $this->A = array_keys($this->A);
     return $this;
   }
 
@@ -493,9 +493,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param bool|false $strict Determines if strict comparison (===) should be used during the search.
    * @return PowerArray
    */
-  function keysOf ($value, $strict = true)
+  function keysOf($value, $strict = true)
   {
-    $this->A = array_keys ($this->A, $value, $strict);
+    $this->A = array_keys($this->A, $value, $strict);
     return $this;
   }
 
@@ -504,9 +504,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed|null null if the array is empty.
    */
-  function last ()
+  function last()
   {
-    return $this->A ? array_slice ($this->A, -1)[0] : null;
+    return $this->A ? array_slice($this->A, -1)[0] : null;
   }
 
   /**
@@ -524,9 +524,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                                   callbacks, as they will complain if an extra argument is provided.
    * @return PowerArray Self, for chaining.
    */
-  function map (callable $fn, $useKeys = true)
+  function map(callable $fn, $useKeys = true)
   {
-    $this->A = map ($this->A, $fn, $useKeys);
+    $this->A = map($this->A, $fn, $useKeys);
     return $this;
   }
 
@@ -541,9 +541,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function mapColumns (array $cols, callable $fn)
+  function mapColumns(array $cols, callable $fn)
   {
-    $this->A = array_mapColumns ($this->A, $cols, $fn);
+    $this->A = array_mapColumns($this->A, $cols, $fn);
     return $this;
   }
 
@@ -552,11 +552,11 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @param array|PowerArray $v
    */
-  function merge ($v)
+  function merge($v)
   {
-    if (is_array ($v)) array_mergeInto ($this->A, $v);
+    if (is_array($v)) array_mergeInto($this->A, $v);
     else if ($v instanceof static)
-      array_mergeInto ($this->A, $v->A);
+      array_mergeInto($this->A, $v->A);
     else throw new InvalidArgumentException;
   }
 
@@ -569,29 +569,29 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @return bool True if the key is missing or the corresponding value in the array is empty (null or empty string).
    * @see is_empty()
    */
-  function missing ($key)
+  function missing($key)
   {
-    return missing ($this->A, $key);
+    return missing($this->A, $key);
   }
 
   function offsetExists($offset): bool
-	{
-    return isset ($this->A[$offset]);
+  {
+    return isset($this->A[$offset]);
   }
 
   function offsetGet($offset): mixed
-	{
-    return isset ($this->A[$offset]) ? $this->A[$offset] : null;
+  {
+    return isset($this->A[$offset]) ? $this->A[$offset] : null;
   }
 
   function offsetSet($offset, $value): void
-	{
+  {
     $this->A[$offset] = $value;
   }
 
   function offsetUnset($offset): void
-	{
-    unset ($this->A[$offset]);
+  {
+    unset($this->A[$offset]);
   }
 
   /**
@@ -600,15 +600,15 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function orderBy ()
+  function orderBy()
   {
-    $this->A = call_user_func_array ('array_orderBy', array_merge ([$this->A], func_get_args ()));
+    $this->A = call_user_func_array('array_orderBy', array_merge([$this->A], func_get_args()));
     return $this;
   }
 
-  function pop ()
+  function pop()
   {
-    return array_pop ($this->A);
+    return array_pop($this->A);
   }
 
   /**
@@ -617,9 +617,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param mixed ...$args One or more elements to prepend to the array.
    * @return PowerArray
    */
-  function prepend ()
+  function prepend()
   {
-    call_user_func_array ('array_unshift', array_merge ($this->A, func_get_args ()));
+    call_user_func_array('array_unshift', array_merge($this->A, func_get_args()));
     return $this;
   }
 
@@ -628,9 +628,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function prune ()
+  function prune()
   {
-    $this->A = array_prune ($this->A);
+    $this->A = array_prune($this->A);
     return $this;
   }
 
@@ -639,9 +639,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function prune_empty ()
+  function prune_empty()
   {
-    $this->A = array_prune_empty ($this->A);
+    $this->A = array_prune_empty($this->A);
     return $this;
   }
 
@@ -653,9 +653,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                          as a final result in case the array is empty.
    * @return mixed The resulting value. If the array is empty and initial is not passed, it returns `null`.
    */
-  function reduce (callable $fn, $initial = null)
+  function reduce(callable $fn, $initial = null)
   {
-    return array_reduce ($this->A, $fn, $initial);
+    return array_reduce($this->A, $fn, $initial);
   }
 
   /**
@@ -665,20 +665,20 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return PowerArray Self, for chaining.
    */
-  function reindex ()
+  function reindex()
   {
-    $this->A = array_values ($this->A);
+    $this->A = array_values($this->A);
     return $this;
   }
 
   public function __serialize()
-	{
-		return serialize($this->A);
-	}
-
-	public function serialize ()
   {
-    return serialize ($this->A);
+    return serialize($this->A);
+  }
+
+  public function serialize()
+  {
+    return serialize($this->A);
   }
 
   /**
@@ -686,9 +686,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed
    */
-  function shift ()
+  function shift()
   {
-    return array_shift ($this->A);
+    return array_shift($this->A);
   }
 
   /**
@@ -704,9 +704,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                           change this behaviour by setting `$preserveKeys` to true.
    * @return PowerArray Self, for chaining.
    */
-  function slice ($start, $len, $preserveKeys = false)
+  function slice($start, $len, $preserveKeys = false)
   {
-    $this->A = array_slice ($this->A, $start, $len, $preserveKeys);
+    $this->A = array_slice($this->A, $start, $len, $preserveKeys);
     return $this;
   }
 
@@ -716,9 +716,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param int $flags [optional] See {@see sort()}
    * @return PowerArray Self, for chaining.
    */
-  function sort ($flags = null)
+  function sort($flags = null)
   {
-    sort ($this->A, $flags);
+    sort($this->A, $flags);
     return $this;
   }
 
@@ -742,9 +742,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *                                element is an array itself.
    * @return PowerArray Self, for chaining.
    */
-  function splice ($offset, $length = null, array $replacement = null)
+  function splice($offset, $length = null, array|null $replacement = null)
   {
-    array_splice ($this->A, $offset, $length, $replacement);
+    array_splice($this->A, $offset, $length, $replacement);
     return $this;
   }
 
@@ -754,9 +754,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param int $count [optional] How many elements to discard.
    * @return PowerArray
    */
-  function stripFirst ($count = 1)
+  function stripFirst($count = 1)
   {
-    $this->A = array_slice ($this->A, $count);
+    $this->A = array_slice($this->A, $count);
     return $this;
   }
 
@@ -766,9 +766,9 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    * @param int $count [optional] How many elements to discard.
    * @return PowerArray
    */
-  function stripLast ($count = 1)
+  function stripLast($count = 1)
   {
-    $this->A = array_slice ($this->A, 0, -$count);
+    $this->A = array_slice($this->A, 0, -$count);
     return $this;
   }
 
@@ -779,19 +779,19 @@ class PowerArray implements ArrayAccess, Countable, IteratorAggregate, Serializa
    *
    * @return mixed An instance of the specified class.
    */
-  function toClass ($className)
+  function toClass($className)
   {
-    return array_toClass ($this->A, $className);
+    return array_toClass($this->A, $className);
   }
 
   public function __unserialize($serialized)
-	{
-		$this->A = unserialize($serialized);
-	}
-
-	public function unserialize ($serialized)
   {
-    $this->A = unserialize ($serialized);
+    $this->A = unserialize($serialized);
+  }
+
+  public function unserialize($serialized)
+  {
+    $this->A = unserialize($serialized);
   }
 
 }
